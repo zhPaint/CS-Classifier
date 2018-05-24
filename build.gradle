@@ -1,0 +1,164 @@
+apply plugin: 'java'
+apply plugin: 'eclipse'
+apply plugin: 'application'
+apply plugin: 'java-library-distribution'
+apply plugin: 'jacoco'
+apply plugin: 'pmd'
+apply plugin: 'checkstyle'
+apply plugin: 'findbugs'
+
+// Main class to run
+mainClassName = "edu.odu.cs.cs350.Library"
+
+// Where to look for dependencies
+repositories {
+    mavenCentral()
+    jcenter()
+}
+
+// Add dependency info here
+dependencies {
+    compile group: 'org.jmockit', name: 'jmockit', version: '1.10+'
+    testCompile group: 'junit', name: 'junit', version: '4.12+'
+    compile 'org.apache.tika:tika-parsers:1.13'
+    runtime 'org.apache.tika:tika-parsers:1.13'
+}
+
+// Define sets of source code
+sourceSets {
+	main {
+		java {
+			srcDir 'src/java'
+			}
+		}
+	test {
+		java {
+			srcDir 'test/java'
+		}
+		resources {
+			srcDir 'test/resources'
+			srcDir 'conf'
+		}
+	}
+	integrationTest {
+		java {
+			//srcDir 'src/java-test'
+		}
+	}
+}
+
+// Task "distZip" added by plugin "java-library-distribution":
+// PACKAGED .JAR + DEPENDENCIES STORED IN ".build/distributions/Blue4.zip"
+distZip.shouldRunAfter(build)
+
+// Run .jar with: "java -jar Blue4.jar arg1 arg2..."
+// OS-specific launch scripts located in build/scripts
+// 		Run in *nix with: "./Blue4 arg1 arg2..."
+//		Run in Windows CLI with: "Blue4 arg1 arg2..." 
+jar {
+    // Keep jar clean:
+    exclude 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA', 'META-INF/*.MF'
+
+	// Specifies main class for .jar
+    manifest {
+        attributes 'Main-Class': mainClassName,
+                   'Class-Path': configurations.runtime.files.collect { "lib/$it.name" }.join(' ')
+    }
+    // How-to add class path:
+    //     http://stackoverflow.com/questions/22659463/add-classpath-in-manifest-using-gradle
+    //     https://gist.github.com/simon04/6865179
+}
+
+test {
+	// Allows build to finish even if unit tests fail:
+	ignoreFailures = true
+	
+	// Executes jacoco whenever "test" task is run (not working?)
+    jacoco {
+	    append = false
+	    destinationFile = file("$buildDir/jacoco/jacocoTest.exec")
+	    classDumpFile = file("$buildDir/jacoco/classpathdumps")
+	}
+}
+
+task integrationTest (type: Test) { 
+testClassesDir = sourceSets.integrationTest.output.classesDir
+classpath = sourceSets.integrationTest.runtimeClasspath
+   jacoco {
+      //destinationFile = file("$buildDir/jacoco/jacocoTest.exec")
+      destinationFile = file("$buildDir/jacoco/integrationTest.exec")
+      //classDumpFile = file("$buildDir/jacoco/classpathdumps")
+      classDumpFile = file("$buildDir/classes/integrationTest")
+   }
+   testClassesDir = sourceSets.integrationTest.output.classesDir
+   classpath = sourceSets.integrationTest.runtimeClasspath
+}
+
+// 	Source analysis dev tools:
+// 		(run with "./gradlew task")
+//		(reports found in build/reports)
+
+// [Non-cosmetic] - Finds common programming flaws like unused variables, empty catch blocks, unnecessary object creation, etc.
+// Task list: pmdMain, pmdTest, pmdSourceSet
+// https://docs.gradle.org/current/userguide/pmd_plugin.html
+pmd {
+	// This version specified in design notes not found in repositories, only finds 4.3
+	// toolVersion = "5.2.3+"
+    ignoreFailures = true
+    consoleOutput = false
+}
+pmdTest.enabled = false
+
+// [Cosmetic] - Enforces Java coding standards
+// Task list: checkstyleMain, checkstyleTest, checkstyleSourceSet, check
+// https://docs.gradle.org/current/userguide/checkstyle_plugin.html
+checkstyle {
+	// Initially not compatible with design note references to Google/Sun coding standards, must remove modules in "config/checkstyle/checkstyle.xml"
+	toolVersion = "5.5"
+    ignoreFailures = true
+    showViolations = false
+}
+tasks.withType(Checkstyle) {
+    reports {
+    html.destination project.file("build/reports/checkstyle/main.html")
+    }
+}
+checkstyleTest.enabled = false
+
+// [Non-cosmetic] - Correctness, bad practice, "dodgy" code detection
+// Task list: findbugsMain, findbugsTest, findbugsSourceSet, check
+// https://docs.gradle.org/current/userguide/findbugs_plugin.html
+findbugsMain {
+    ignoreFailures = true
+    effort = 'max'
+    reportLevel = 'high'
+    reports {
+        xml.enabled = false
+        html.enabled = true
+    }
+}
+findbugsTest.enabled = false
+
+// [Non-cosmetic] - Unit, Integration test coverage reports
+// Task list: jacoco, jacocoTestReport
+// https://docs.gradle.org/current/userguide/jacoco_plugin.html
+jacoco {
+    toolVersion = "0.7.4.201502262128"
+//    reportsDir = file("$buildDir/customJacocoReportDir")
+    
+    // Executes jacoco when the build runs
+    applyTo run
+}
+
+task applicationCodeCoverageReport(type:JacocoReport){
+    executionData run
+    sourceSets sourceSets.main
+}
+jacocoTestReport {
+    reports {
+    	// Can change output format of jacoco reports here:
+        xml.enabled false
+        csv.enabled false
+        html.destination "${buildDir}/reports/jacoco"
+    }
+}
