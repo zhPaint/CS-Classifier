@@ -1,25 +1,43 @@
-This project uses the Gradle build manager to package dependencies.
+# CS-Classifier
+
+CS-Classifier was developed by 4 undergraduate students for the CS350: Intro to Software Engineering course at Old Dominion University.
+
+CS-Classifier was developed for the purpose of classifying documents to categories in the 1998 ACM Classification System.
+Supported file extensions: .html, .pdf, .xml, .txt
+
+## Authors:
+* **Rufor Chen** - *Developer* - [zhPaint](https://github.com/zhPaint)
+* **Robert Marchand** - *Developer*
+* **Christopher Harrison** - *Developer*
+* **M. Walker** - *Developer*
 
 
-The Gradle wrapper has been implemented so that developers do not need to have 
-it installed, this allows for the use of all gradle commands by replacing 
-"gradle <command>" with "gradlew <command>"
+## Usage:
+This project uses the Gradle for build automation, and implements the Gradle Wrapper.
 
-
-
-
-A list of gradle commands can be retrieved with the "--help" command:
+For a list of gradle tasks, use:
+```
+gradlew --help
+```
 
 #### Windows:
-
-"gradlew --help"
-
+```
+gradlew --help
+```
 #### *nix:
+```
+./gradlew --help
+```
 
-"./gradlew --help"
+#### To run:
+Use following command from the project root:
+```
+java -jar build/libs/Blue4.jar
+```
+**IMPORTANT**: you must be in the same directory as build.gradle to execute the .jar
+so that it can detect the specified manifest/mainClass for the .jar
 
-
-## Key commands for development:
+## Key tasks for development:
 
 -v: returns the version of gradle
 
@@ -32,9 +50,4 @@ run: attempts to run the mainClassName specified in build.gradle
 test: attempts to run the unit tests in src/test/java, will only 
     show successful build if no tests fail.
 
-#### To run the .jar executable, use following command from the project root:
 
-java -jar build/libs/Blue4.jar
-
-**IMPORTANT**: you must be in the same directory as build.gradle to execute the .jar
-so that it can detect the specified manifest/mainClass for the .jar
